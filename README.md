@@ -58,7 +58,7 @@ pip install -e .
 
 ## 使用方式
 
-### 命令行工具
+### cli
 
 ```bash
 # 使用配置文件启动
@@ -74,7 +74,7 @@ python scripts/mediamixer.py configs/example.yaml --no-interactive
 python scripts/mediamixer.py --help
 ```
 
-### 交互式命令
+#### 交互式命令
 
 启动后进入交互模式，支持以下命令：
 
@@ -85,7 +85,7 @@ python scripts/mediamixer.py --help
 > quit / exit                    # 退出程序
 ```
 
-### 配置文件示例
+#### 配置文件示例
 
 ```yaml
 # 输入源配置
@@ -170,13 +170,7 @@ pytest test/
 
 ### 项目本地环境
 
-项目使用位于 `conda/` 目录下的本地 Conda 环境：
 
-```bash
-conda activate d:\git\pymediamixer\conda
-```
-
-VSCode 已配置自动激活该环境。
 
 ## 许可证
 
