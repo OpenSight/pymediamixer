@@ -144,6 +144,13 @@ ENV/
 env.bak/
 venv.bak/
 
+# Conda environment (project-local)
+conda/
+
+# VSCode settings
+.vscode/
+.qoder/
+
 # Spyder project settings
 .spyderproject
 .spyproject

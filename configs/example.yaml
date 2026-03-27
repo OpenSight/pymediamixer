@@ -1,0 +1,82 @@
+# pymediamixer 示例配置文件 - 双输入画中画预览
+# 使用方式: pymediamixer configs/example.yaml
+# 
+# 配置格式与 Pipeline 构建接口保持一致
+
+# 输入源配置
+inputs:
+  # 输入源 0：主画面（SMPTE 彩条测试图案）
+  - name: input0
+    type: videotestsrc
+    media_types: ["video"]  # 输出媒体类型列表
+    config:
+      pattern: smpte  # 可选: smpte, ball, snow, black, white, red, green, blue
+      width: 1280
+      height: 720
+      framerate: "30/1"
+
+  # 输入源 1：画中画（运动小球测试图案）
+  - name: input1
+    type: videotestsrc
+    media_types: ["video"]
+    config:
+      pattern: snow
+      width: 640
+      height: 480
+      framerate: "30/1"
+
+# 合成器配置
+compositors:
+  # 视频合成器：2通道，输出 1280x720
+  - name: comp0
+    type: video_compositor
+    output_caps:
+      width: 640
+      height: 360
+      framerate: "25/1"
+    # inputs: 输入源名称列表，顺序对应 channel 索引
+    inputs: [input0, input1]
+    config:
+      channel_layouts:
+        # channel 0：主画面，全屏显示
+        0:
+          xpos: 0
+          ypos: 0
+          width: 640
+          height: 360
+          zorder: 0       # 层级，越小越靠后
+          alpha: 1.0      # 透明度 0-1
+        # channel 1：画中画，右下角小窗
+        1:
+          xpos: 320
+          ypos: 180
+          width: 160
+          height: 90
+          zorder: 1       # 层级高于通道 0，显示在前面
+          alpha: 1.0
+
+# 输出配置
+outputs:
+  # 输出：本地预览窗口
+  - name: preview
+    type: autovideosink  # 自动选择系统可用的视频输出
+    sources:
+      video: comp0  # 指定视频源的合成器名称
+
+# 配置说明
+# ------------
+# inputs.type: 可选值 videotestsrc（测试源）
+# inputs.media_types: 输出媒体类型列表，如 ["video"], ["audio"], ["video", "audio"]
+# inputs.config: 与对应 Pipeline 的 config 参数一致
+#
+# compositors.type: 可选值 video_compositor（视频合成器）
+# compositors.output_caps: 输出规格，与基类参数一致
+# compositors.inputs: 输入源名称列表，顺序对应 channel 索引
+# compositors.config.channel_layouts: 各通道布局配置
+#   - xpos, ypos: 位置坐标
+#   - width, height: 宽高
+#   - zorder: 层级（越大越靠前）
+#   - alpha: 透明度（0-1）
+#
+# outputs.type: 可选值 autovideosink（自动选择本地预览）
+# outputs.sources: 媒体类型到合成器名称的映射，与 OutputPipeline 的 sources 参数一致

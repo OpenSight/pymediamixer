@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pymediamixer"
+version = "0.1.0"
+description = "基于 GStreamer 的媒体导播混流应用"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "GPL"}
+authors = [
+    {name = "pymediamixer"}
+]
+keywords = ["gstreamer", "media", "mixer", "video", "audio"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Multimedia :: Sound/Audio",
+]
+
+dependencies = [
+    "PyGObject>=3.42.0",  # GStreamer Python 绑定
+    "PyYAML>=6.0",        # YAML 配置文件支持
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
+[project.scripts]
+pymediamixer = "pymediamixer.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/pymediamixer/pymediamixer"
+Repository = "https://github.com/pymediamixer/pymediamixer"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
