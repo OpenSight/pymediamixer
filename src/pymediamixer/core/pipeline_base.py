@@ -74,7 +74,7 @@ class PipelineBase(ABC):
         self.on_error: Optional[Callable[[str, str, Optional[str]], None]] = None
         self.on_eos: Optional[Callable[[str], None]] = None
         self.on_restarted: Optional[Callable[[str], None]] = None
-        self.on_setup_bus: Optional[Callable[[str, Gst.Bus], None]] = None
+
 
     @property
     def name(self) -> str:
@@ -159,11 +159,15 @@ class PipelineBase(ABC):
                 return
             
             self._running = False
+            pipeline_to_cleanup = self._pipeline
+            self._pipeline = None
         
         # 以下操作在锁外执行，避免死锁
         try:
-            if self._pipeline:
-                self._pipeline.set_state(Gst.State.NULL)
+            # 清理 pipeline 资源
+            if pipeline_to_cleanup:
+                self._cleanup_pipeline(pipeline_to_cleanup)
+                del pipeline_to_cleanup
             
             # 退出 mainloop
             if self._mainloop.is_running():
@@ -175,7 +179,6 @@ class PipelineBase(ABC):
                 if self._thread.is_alive():
                     self._logger.warning(f"Pipeline {self._name} thread did not exit in time")
             
-            self._pipeline = None
             self._thread = None
             
             self._logger.info(f"Pipeline {self._name} stopped")
@@ -217,11 +220,10 @@ class PipelineBase(ABC):
                 old_pipeline = self._pipeline
                 self._pipeline = None
             
+            # 清理旧 pipeline 资源
             if old_pipeline:
-                bus = old_pipeline.get_bus()
-                if bus:
-                    bus.remove_signal_watch()
-                old_pipeline.set_state(Gst.State.NULL)
+                self._cleanup_pipeline(old_pipeline)
+                del old_pipeline
             
             # 2. 延迟避免快速循环
             time.sleep(self._restart_delay)
@@ -337,11 +339,45 @@ class PipelineBase(ABC):
         bus.connect("message::latency", self._on_latency)
         bus.connect("message::warning", self._on_warning)
         
-        if self.on_setup_bus:
-            try:
-                self.on_setup_bus(self._name, bus)
-            except Exception as e:
-                self._logger.exception(f"Error in on_setup_bus callback: {e}")
+        # 钩子：子类可添加额外的消息监听
+        self._setup_additional_bus_handlers(bus)
+
+    def _setup_additional_bus_handlers(self, bus: Gst.Bus):
+        """子类可重写以添加额外的 bus 消息处理
+        
+        此方法在 mainloop 线程中被调用，确保注册的信号处理器能正常工作。
+        不需要显式清理回调，bus finalize 时会自动断开所有连接。
+        
+        Args:
+            bus: GStreamer bus 对象
+            
+        Example:
+            def _setup_additional_bus_handlers(self, bus):
+                bus.connect("message::buffering", self._on_buffering)
+        """
+        pass
+
+    def _cleanup_pipeline(self, pipeline: Gst.Pipeline):
+        """清理 pipeline 资源
+        
+        移除 signal watch，设置 NULL 状态。
+        注意：不需要显式 disconnect_by_func，bus finalize 时会自动断开所有连接。
+        
+        Args:
+            pipeline: 要清理的 GStreamer pipeline 对象
+        """
+        if not pipeline:
+            return
+        
+        bus = pipeline.get_bus()
+        if bus:
+            # 必须调用：平衡 add_signal_watch() 的引用计数
+            bus.remove_signal_watch()
+        
+        # 设置为 NULL 状态释放 GStreamer 内部资源
+        pipeline.set_state(Gst.State.NULL)
+
+
 
     def _on_error(self, bus, msg):
         """错误消息处理

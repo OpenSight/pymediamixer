@@ -1,0 +1,35 @@
+# 错误恢复测试专用配置 - 最小化 pipeline 数量
+
+inputs:
+  - name: input0
+    type: videotestsrc
+    media_types: ["video"]
+    config:
+      pattern: smpte
+      width: 640
+      height: 360
+      framerate: "30/1"
+
+compositors:
+  - name: comp0
+    type: video_compositor
+    output_caps:
+      width: 640
+      height: 360
+      framerate: "30/1"
+    inputs: [input0]
+    config:
+      channel_layouts:
+        0:
+          xpos: 0
+          ypos: 0
+          width: 640
+          height: 360
+          zorder: 0
+          alpha: 1.0
+
+outputs:
+  - name: preview
+    type: autovideosink
+    sources:
+      video: comp0

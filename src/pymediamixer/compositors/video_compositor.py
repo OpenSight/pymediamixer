@@ -175,6 +175,7 @@ class VideoCompositor(CompositingPipeline):
         
         intersink = Gst.ElementFactory.make("intersink", f"{self._name}_output_intersink")
         intersink.set_property("producer-name", self.output_channel)
+        intersink.set_property("event-types", []) # don't propagate eos events
         
         for elem in [out_convert, out_caps, intersink]:
             pipeline.add(elem)
